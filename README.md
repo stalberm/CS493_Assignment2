@@ -1,8 +1,5 @@
 # Assignment 2
 
-**Assignment due at 11:59pm on Monday 5/2/2022**<br/>
-**Demo due by 11:59pm on Monday 5/16/2022**
-
 The goal of this assignment is to start using a real database to store application data.  The assignment requirements are listed below.
 
 You are provided some starter code in this repository that implements a solution to assignment 1.  The starter code's API server is implemented in `server.js`, and individual routes are modularized within the `api/` directory.  Tests and a testing environment for the API are included in the `tests/` directory.  You can import these tests into either Postman or Insomnia and build on them if you like.  Note that, depending on where you're running your API server, you may need to update the `baseUrl` variable in the included testing environment to reflect the URL for your own server.
