@@ -1,0 +1,36 @@
+version: '3'
+services:
+  api: 
+    build: .
+    environment:
+      API_MONGO_USERNAME: ${API_MONGO_USERNAME:-api-user}
+      API_MONGO_PASSWORD: ${API_MONGO_PASSWORD:-somepass}
+      MONGO_DATABASE_NAME: ${MONGO_DATABASE_NAME:-my-database}
+    ports:
+      - 8000:8000
+    restart: on-failure
+    command: ["bash", "wait-for-mongodb.sh", "npm", "start"]
+    depends_on:
+      [database, setup]
+    
+  setup:
+    build: .
+    environment:
+      API_MONGO_USERNAME: ${API_MONGO_USERNAME:-api-user}
+      API_MONGO_PASSWORD: ${API_MONGO_PASSWORD:-somepass}
+      MONGO_DATABASE_NAME: ${MONGO_DATABASE_NAME:-my-database}
+      MONGO_USERNAME: ${MONGO_USERNAME:-admin}
+      MONGO_PASSWORD: ${MONGO_PASSWORD:-admin}
+    restart: on-failure
+    command: ["bash", "wait-for-mongodb.sh", "node", "setup.js"]
+    depends_on:
+      [database]
+
+  database:
+    image: mongo
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-admin}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE_NAME:-my-database}

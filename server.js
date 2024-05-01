@@ -1,5 +1,18 @@
 const express = require('express');
 const morgan = require('morgan');
+const MongoDB = require('./database');
+
+const mongoHost = "database";
+const mongoPort = 27017;
+const mongoUser = process.env.API_MONGO_USERNAME || "api-user";
+const mongoPassword = process.env.API_MONGO_PASSWORD || "somepass";
+const mongoDBName = process.env.MONGO_DATABASE_NAME || "my-database";
+
+const mongoURL =
+    `mongodb://${mongoUser}:${mongoPassword}@` +
+    `${mongoHost}:${mongoPort}/${mongoDBName}`;
+
+let db;
 
 const api = require('./api');
 
@@ -22,9 +35,9 @@ app.use(express.static('public'));
 app.use('/', api);
 
 app.use('*', function (req, res, next) {
-  res.status(404).json({
-    error: "Requested resource " + req.originalUrl + " does not exist"
-  });
+    res.status(404).json({
+        error: "Requested resource " + req.originalUrl + " does not exist"
+    });
 });
 
 /*
@@ -32,12 +45,17 @@ app.use('*', function (req, res, next) {
  * a response with a 500 status to the client.
  */
 app.use('*', function (err, req, res, next) {
-  console.error("== Error:", err)
-  res.status(500).send({
-      err: "Server error.  Please try again later."
-  })
+    console.error("== Error:", err)
+    res.status(500).send({
+        err: "Server error. Please try again later."
+    })
 })
 
-app.listen(port, function() {
-  console.log("== Server is running on port", port);
-});
+async function initializeDatabase() {
+    await MongoDB.init(mongoURL, mongoDBName)
+    app.listen(port, function () {
+        console.log("== Server listening on port", port);
+    });
+}
+
+initializeDatabase();
