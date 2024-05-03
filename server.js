@@ -2,7 +2,7 @@ const express = require('express');
 const morgan = require('morgan');
 const MongoDB = require('./database');
 
-const mongoHost = "database";
+const mongoHost = "localhost";
 const mongoPort = 27017;
 const mongoUser = process.env.API_MONGO_USERNAME || "api-user";
 const mongoPassword = process.env.API_MONGO_PASSWORD || "somepass";
@@ -11,8 +11,6 @@ const mongoDBName = process.env.MONGO_DATABASE_NAME || "my-database";
 const mongoURL =
     `mongodb://${mongoUser}:${mongoPassword}@` +
     `${mongoHost}:${mongoPort}/${mongoDBName}`;
-
-let db;
 
 const api = require('./api');
 
