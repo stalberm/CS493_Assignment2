@@ -147,23 +147,13 @@ router.get('/:businessid', async function (req, res, next) {
         console.log("No businesses found");
         next();
     }
+
     try {
         const business = await businessesColl.findOne(query);
         if (business) {
-            const query = { businessid: businessid };
-            const reviews = [];
-            const photos = [];
-
-            var cursor = reviewsColl.find(query);
-            await cursor.forEach(reviewDoc => {
-                reviews.push(reviewDoc);
-            });
-            cursor = photosColl.find(query);
-            await cursor.forEach(photoDoc => {
-                photos.push(photoDoc);
-            });
-            business.reviews = reviews;
-            business.photos = photos;
+            const query = { businessid: businessid.toString() };
+            business.reviews = await reviewsColl.find(query).toArray();
+            business.photos = await photosColl.find(query).toArray();
             res.status(200).json(business);
         } else {
             next();

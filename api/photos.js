@@ -3,11 +3,10 @@ const { validateAgainstSchema, extractValidFields } = require('../lib/validation
 
 const MongoDB = require('../database');
 const { ObjectId } = require('mongodb');
-const photos = require('../data/photos');
-const e = require('express');
+const photoCollection = "photos";
 
+exports.photoCollection = photoCollection;
 exports.router = router;
-exports.photos = photos;
 
 /*
  * Schema describing required/optional fields of a photo object.
@@ -18,7 +17,7 @@ const photoSchema = {
     caption: { required: false }
 };
 
-const photoCollection = "photos";
+
 /*
  * Route to create a new photo.
  */
