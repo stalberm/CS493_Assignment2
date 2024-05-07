@@ -4,7 +4,6 @@ const { validateAgainstSchema, extractValidFields } = require('../lib/validation
 
 const MongoDB = require('../database');
 const { ObjectId } = require('mongodb');
-const e = require('express');
 exports.router = router;
 
 
@@ -28,7 +27,7 @@ const businessSchema = {
 /*
  * Route to return a list of businesses.
  */
-router.get('/', async function (req, res) {
+router.get('/', async function (req, res, next) {
 
 
     /*
@@ -44,13 +43,6 @@ router.get('/', async function (req, res) {
 
     try {
         const cursor = businessesColl.find(query);
-
-        const count = await businessesColl.countDocuments(query);
-        if (count === 0) {
-            console.log("No businesses found");
-            next();
-        }
-
         await cursor.forEach(doc => {
             businesses.push(doc);
         });
@@ -108,6 +100,7 @@ router.get('/', async function (req, res) {
     });
 });
 
+const businessCollection = "businesses";
 /*
  * Route to create a new business.
  */
@@ -115,7 +108,7 @@ router.post('/', async function (req, res, next) {
     if (validateAgainstSchema(req.body, businessSchema)) {
         const business = extractValidFields(req.body, businessSchema);
         const db = MongoDB.getInstance();
-        const businessesColl = db.collection("businesses");
+        const businessesColl = db.collection(businessCollection);
         const result = await businessesColl.insertOne(business);
         res.status(201).json({
             id: result.insertedId,
@@ -134,9 +127,17 @@ router.post('/', async function (req, res, next) {
  * Route to fetch info about a specific business.
  */
 router.get('/:businessid', async function (req, res, next) {
-    const businessid = ObjectId.createFromHexString(req.params.businessid);
+    let businessid;
+    try {
+        businessid = ObjectId.createFromHexString(req.params.businessid);
+    } catch (error) {
+        console.error("Error:", error);
+        return res.status(400).json({
+            error: "Invalid business ID"
+        })
+    }
     const db = MongoDB.getInstance();
-    const businessesColl = db.collection("businesses");
+    const businessesColl = db.collection(businessCollection);
     const reviewsColl = db.collection("reviews");
     const photosColl = db.collection("photos");
     const query = { _id: businessid };
@@ -148,7 +149,6 @@ router.get('/:businessid', async function (req, res, next) {
     }
     try {
         const business = await businessesColl.findOne(query);
-        console.dir(business);
         if (business) {
             const query = { businessid: businessid };
             const reviews = [];
@@ -180,21 +180,28 @@ router.get('/:businessid', async function (req, res, next) {
  * Route to replace data for a business.
  */
 router.put('/:businessid', async function (req, res, next) {
-    const businessid = ObjectId.createFromHexString(req.params.businessid);
+    let businessid;
+    try {
+        businessid = ObjectId.createFromHexString(req.params.businessid);
+    } catch (error) {
+        console.error("Error:", error);
+        return res.status(400).json({
+            error: "Invalid business ID"
+        })
+    }
     const db = MongoDB.getInstance();
-    const businessesColl = db.collection("businesses");
+    const businessesColl = db.collection(businessCollection);
     const query = { _id: businessid };
 
-    console.dir("HIT");
     const count = await businessesColl.countDocuments({});
     if (count === 0) {
         console.log("No businesses found");
         next();
     }
     if (validateAgainstSchema(req.body, businessSchema)) {
-        const business = extractValidFields(req.body, businessSchema);
+        const updatedBusiness = extractValidFields(req.body, businessSchema);
         try {
-            const result = await businessesColl.replaceOne(query, business);
+            const result = await businessesColl.replaceOne(query, updatedBusiness);
             if (result.matchedCount === 1 && result.modifiedCount === 1) {
                 res.status(200).json({
                     links: {
@@ -223,9 +230,17 @@ router.put('/:businessid', async function (req, res, next) {
  */
 router.delete('/:businessid', async function (req, res, next) {
 
-    const businessid = ObjectId.createFromHexString(req.params.businessid);
+    let businessid;
+    try {
+        businessid = ObjectId.createFromHexString(req.params.businessid);
+    } catch (error) {
+        console.error("Error:", error);
+        return res.status(400).json({
+            error: "Invalid business ID"
+        })
+    }
     const db = MongoDB.getInstance();
-    const businessesColl = db.collection("businesses");
+    const businessesColl = db.collection(businessCollection);
     const query = { _id: businessid };
 
     const count = await businessesColl.countDocuments({});
