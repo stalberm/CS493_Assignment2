@@ -182,7 +182,7 @@ router.delete('/:reviewID', async function (req, res, next) {
     }
 
     try {
-        const result = await reviewColl.deleteOne(qeury);
+        const result = await reviewColl.deleteOne(query);
         if (result.deletedCount === 1) {
             res.status(204).end();
         } else {

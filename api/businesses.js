@@ -4,7 +4,10 @@ const { validateAgainstSchema, extractValidFields } = require('../lib/validation
 
 const MongoDB = require('../database');
 const { ObjectId } = require('mongodb');
+const businessCollection = "businesses";
+
 exports.router = router;
+exports.businessCollection = businessCollection;
 
 
 /*
@@ -100,7 +103,6 @@ router.get('/', async function (req, res, next) {
     });
 });
 
-const businessCollection = "businesses";
 /*
  * Route to create a new business.
  */

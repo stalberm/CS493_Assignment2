@@ -1,7 +1,7 @@
 const router = require('express').Router();
 
-const { businesses } = require('./businesses');
-const { reviews } = require('./reviews');
+const { businessCollection } = require('./businesses');
+const { reviewCollection } = require('./reviews');
 const { photoCollection } = require('./photos');
 
 const MongoDB = require('../database');
@@ -23,29 +23,92 @@ const userSchema = {
 /*
  * Route to list all of a user's businesses.
  */
-router.get('/:userid/businesses', function (req, res) {
-    const userid = parseInt(req.params.userid);
-    const userBusinesses = businesses.filter(business => business && business.ownerid === userid);
-    res.status(200).json({
-        businesses: userBusinesses
-    });
+router.get('/:userid/businesses', async function (req, res, next) {
+    let userid;
+    try {
+        userid = ObjectId.createFromHexString(req.params.userid);
+    } catch (error) {
+        console.error("Error:", error);
+        return res.status(400).json({
+            error: "Invalid user ID"
+        });
+    }
+    const db = MongoDB.getInstance();
+    const userColl = db.collection(userCollection);
+    const businessColl = db.collection(businessCollection);
+    const query = { _id: userid };
+
+    const count = await userColl.countDocuments({});
+    if (count === 0) {
+        console.log("No users found");
+        next();
+    }
+    try {
+        const user = await userColl.findOne(query);
+        if (user) {
+            const query = { ownerid: userid.toString() };
+            const businesses = await businessColl.find(query).toArray();
+            res.status(200).json({
+                businesses: businesses
+            });
+        } else {
+            next();
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(400).json({
+            error: error
+        });
+    }
 });
 
 /*
  * Route to list all of a user's reviews.
  */
-router.get('/:userid/reviews', function (req, res) {
-    const userid = parseInt(req.params.userid);
-    const userReviews = reviews.filter(review => review && review.userid === userid);
-    res.status(200).json({
-        reviews: userReviews
-    });
+router.get('/:userid/reviews', async function (req, res, next) {
+
+    let userid;
+    try {
+        userid = ObjectId.createFromHexString(req.params.userid);
+    } catch (error) {
+        console.error("Error:", error);
+        return res.status(400).json({
+            error: "Invalid user ID"
+        });
+    }
+    const db = MongoDB.getInstance();
+    const userColl = db.collection(userCollection);
+    const reviewColl = db.collection(reviewCollection);
+    const query = { _id: userid };
+
+    const count = await userColl.countDocuments({});
+    if (count === 0) {
+        console.log("No users found");
+        next();
+    }
+    try {
+        const user = await userColl.findOne(query);
+        if (user) {
+            const query = { userid: userid.toString() };
+            const reviews = await reviewColl.find(query).toArray();
+            res.status(200).json({
+                reviews: reviews
+            });
+        } else {
+            next();
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(400).json({
+            error: error
+        });
+    }
 });
 
 /*
  * Route to list all of a user's photos.
  */
-router.get('/:userid/photos', async function (req, res) {
+router.get('/:userid/photos', async function (req, res, next) {
 
     let userid;
     try {
