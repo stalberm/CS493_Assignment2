@@ -124,8 +124,7 @@ router.put('/:photoID', async function (req, res, next) {
                 } else {
                     next();
                 }
-            }
-            else {
+            } else {
                 res.status(403).json({
                     error: "Updated photo cannot modify businessid or userid"
                 });
@@ -174,7 +173,7 @@ router.delete('/:photoID', async function (req, res, next) {
         } else {
             next();
         }
-    } catch {
+    } catch (error) {
         console.error("Error:", error);
     }
 });

@@ -198,8 +198,7 @@ router.put('/:businessid', async function (req, res, next) {
                         business: `/businesses/${businessid}`
                     }
                 });
-            }
-            else {
+            } else {
                 next();
             }
         } catch (error) {
