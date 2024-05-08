@@ -77,8 +77,6 @@ router.get('/:photoID', async function (req, res, next) {
             error: error
         });
     }
-
-
 });
 
 /*
