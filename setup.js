@@ -6,8 +6,8 @@ const mongoUser = process.env.API_MONGO_USERNAME || "api-user";
 const mongoPassword = process.env.API_MONGO_PASSWORD || "somepass";
 const mongoDBName = process.env.MONGO_DATABASE_NAME || "my-database";
 
-const adminUser = process.env.MONGO_USERNAME || "admin";
-const adminPassword = process.env.MONGO_PASSWORD || "admin";
+const adminUser = process.env.MONGO_USERNAME;
+const adminPassword = process.env.MONGO_PASSWORD;
 
 
 const mongoURL =

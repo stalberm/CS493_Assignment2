@@ -2,7 +2,7 @@ const express = require('express');
 const morgan = require('morgan');
 const MongoDB = require('./database');
 
-const mongoHost = "localhost";
+const mongoHost = "database"; //localhost when running npm start locally
 const mongoPort = 27017;
 const mongoUser = process.env.API_MONGO_USERNAME || "api-user";
 const mongoPassword = process.env.API_MONGO_PASSWORD || "somepass";
