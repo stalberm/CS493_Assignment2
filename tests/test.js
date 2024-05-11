@@ -168,15 +168,17 @@ describe('Review Endpoint Tests', () => {
 
 describe('User Endpoint Tests', () => {
 
-    beforeAll(async () => {
-        const user = {
-            _id: userId,
-            name: "Test User",
-            businessId: businessId
-        }
-        const response = await axios.post(`${API_URL}/users`, user);
-    });
+    const user = {
+        _id: userId,
+        name: "Test User",
+        email: "example@example.com",
+        password: "testpass"
+    }
 
+    test('POST /users', async () => {
+        const response = await axios.post(`${API_URL}/users`, user);
+        expect(response.status).toBe(201);
+    })
 
     test('GET /users/:userid/photos', async () => {
         const response = await axios.get(`${API_URL}/users/${userId}/photos`);

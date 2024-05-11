@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const bcrypt = require('bcryptjs');
 
 const { businessCollection } = require('./businesses');
 const { reviewCollection } = require('./reviews');
@@ -18,7 +19,8 @@ exports.router = router;
 const userSchema = {
     _id: { required: false },
     name: { required: true },
-    businessid: { required: false },
+    email: { required: true },
+    password: { required: true },
 };
 
 /*
@@ -124,7 +126,6 @@ router.get('/:userid/photos', async function (req, res, next) {
     const userColl = db.collection(userCollection);
     const photoColl = db.collection(photoCollection);
     const query = { _id: userid };
-    console.log(query);
     const count = await userColl.countDocuments({});
     if (count === 0) {
         console.log("No users found");
@@ -132,11 +133,8 @@ router.get('/:userid/photos', async function (req, res, next) {
     }
     try {
         const user = await userColl.findOne(query);
-        console.log(user);
         if (user) {
-            console.log(user);
             const query = { userid: userid.toString() };
-            console.log("Here");
             var photos = [];
             if (photoColl.countDocuments({})) {
                 photos = await photoColl.find(query).toArray();
@@ -158,6 +156,8 @@ router.get('/:userid/photos', async function (req, res, next) {
 router.post('/', async function (req, res, next) {
     if (validateAgainstSchema(req.body, userSchema)) {
         const user = extractValidFields(req.body, userSchema);
+        const passwordHash = await bcrypt.hash(user.password, 8);
+        user.password = passwordHash;
         const db = MongoDB.getInstance();
         const userColl = db.collection(userCollection);
         if (user._id) {

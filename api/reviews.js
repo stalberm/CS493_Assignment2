@@ -129,7 +129,6 @@ router.put('/:reviewID', async function (req, res, next) {
             if (existingReview && updatedReview.businessid === existingReview.businessid && updatedReview.userid === existingReview.userid) {
                 const result = await reviewColl.replaceOne(query, updatedReview);
                 if (result.matchedCount === 1 && result.modifiedCount === 1) {
-                    console.log("in");
                     res.status(200).json({
                         links: {
                             review: `/reviews/${reviewID}`,
