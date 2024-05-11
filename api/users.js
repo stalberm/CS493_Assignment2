@@ -8,6 +8,7 @@ const { photoCollection } = require('./photos');
 const MongoDB = require('../database');
 const { ObjectId } = require('mongodb');
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
+const e = require('express');
 const userCollection = "users";
 
 exports.userCollection = userCollection;
@@ -21,6 +22,7 @@ const userSchema = {
     name: { required: true },
     email: { required: true },
     password: { required: true },
+    admin: { required: false }
 };
 
 /*
@@ -158,25 +160,79 @@ router.post('/', async function (req, res, next) {
         const user = extractValidFields(req.body, userSchema);
         const passwordHash = await bcrypt.hash(user.password, 8);
         user.password = passwordHash;
+        user.admin = false;
         const db = MongoDB.getInstance();
         const userColl = db.collection(userCollection);
         if (user._id) {
             const newId = ObjectId.createFromHexString(user._id);
             user._id = newId;
         }
-        try {
-            const result = await userColl.insertOne(user);
-            res.status(201).json({
-                id: result.insertedId,
-                links: {
-                    user: `/users/${result.insertedId}`,
-                }
-            });
-        } catch (error) {
-            console.error("Error:", error);
+        const emailExists = await userColl.countDocuments({ email: user.email }) > 0;
+        if (emailExists) {
             res.status(400).json({
-                error: error
-            })
+                error: "Email already in use"
+            });
+        } else {
+            try {
+                const result = await userColl.insertOne(user);
+                res.status(201).json({
+                    id: result.insertedId,
+                    links: {
+                        user: `/users/${result.insertedId}`,
+                    }
+                });
+            } catch (error) {
+                console.error("Error:", error);
+                res.status(400).json({
+                    error: error
+                })
+            }
         }
+    } else {
+        res.status(400).json({
+            error: "Request body is not a valid user object"
+        });
     }
 });
+
+router.post('/login', async function (req, res, next) {
+    if (req.body && req.body.email && req.body.password) {
+        try {
+            const authenticated =
+                await validateUser(req.body.email, req.body.password);
+            if (authenticated) {
+                res.status(200).send({});
+            } else {
+                res.status(401).send({
+                    error: "Invalid authentication credentials"
+                });
+            }
+        } catch (err) {
+            console.log(err);
+            res.status(500).send({
+                error: "Error logging in.  Try again later."
+            });
+        }
+    } else {
+        res.status(400).json({
+            error: "Request body needs user ID and password."
+        });
+    }
+})
+
+async function validateUser(email, password) {
+    const user = await getUserByID(email, true);
+    const authenticated = user &&
+        await bcrypt.compare(password, user.password);
+    return authenticated;
+}
+
+async function getUserByID(email, includePassword) {
+    const projection = includePassword ? {} : { password: 0 };
+    const db = MongoDB.getInstance();
+    const userColl = db.collection(userCollection);
+    const user = await userColl
+        .find({ email: email }).project(projection).next();
+    return user;
+}
+
