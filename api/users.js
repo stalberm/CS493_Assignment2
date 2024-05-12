@@ -29,130 +29,147 @@ const userSchema = {
 /*
  * Route to list all of a user's businesses.
  */
-router.get('/:userid/businesses', async function (req, res, next) {
-    let userid;
-    try {
-        userid = ObjectId.createFromHexString(req.params.userid);
-    } catch (error) {
-        console.error("Error:", error);
-        return res.status(400).json({
-            error: "Invalid user ID"
-        });
-    }
-    const db = MongoDB.getInstance();
-    const userColl = db.collection(userCollection);
-    const businessColl = db.collection(businessCollection);
-    const query = { _id: userid };
+router.get('/:userid/businesses', requireAuthentication, async function (req, res, next) {
 
-    const count = await userColl.countDocuments({});
-    if (count === 0) {
-        console.log("No users found");
-        next();
-    }
-    try {
-        const user = await userColl.findOne(query);
-        if (user) {
-            const query = { ownerid: userid.toString() };
-            const businesses = await businessColl.find(query).toArray();
-            res.status(200).json({
-                businesses: businesses
+    if (req.user !== req.params.userid) {
+        res.status(403).json({
+            error: "Unauthorized to access the specified resource"
+        });
+    } else {
+        let userid;
+        try {
+            userid = ObjectId.createFromHexString(req.params.userid);
+        } catch (error) {
+            console.error("Error:", error);
+            return res.status(400).json({
+                error: "Invalid user ID"
             });
-        } else {
+        }
+        const db = MongoDB.getInstance();
+        const userColl = db.collection(userCollection);
+        const businessColl = db.collection(businessCollection);
+        const query = { _id: userid };
+
+        const count = await userColl.countDocuments({});
+        if (count === 0) {
+            console.log("No users found");
             next();
         }
-    } catch (error) {
-        console.error("Error:", error);
-        res.status(400).json({
-            error: error
-        });
+        try {
+            const user = await userColl.findOne(query);
+            if (user) {
+                const query = { ownerid: userid.toString() };
+                const businesses = await businessColl.find(query).toArray();
+                res.status(200).json({
+                    businesses: businesses
+                });
+            } else {
+                next();
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            res.status(400).json({
+                error: error
+            });
+        }
     }
 });
 
 /*
  * Route to list all of a user's reviews.
  */
-router.get('/:userid/reviews', async function (req, res, next) {
-
-    let userid;
-    try {
-        userid = ObjectId.createFromHexString(req.params.userid);
-    } catch (error) {
-        console.error("Error:", error);
-        return res.status(400).json({
-            error: "Invalid user ID"
+router.get('/:userid/reviews', requireAuthentication, async function (req, res, next) {
+    if (req.user !== req.params.userid) {
+        res.status(403).json({
+            error: "Unauthorized to access the specified resource"
         });
-    }
-    const db = MongoDB.getInstance();
-    const userColl = db.collection(userCollection);
-    const reviewColl = db.collection(reviewCollection);
-    const query = { _id: userid };
-
-    const count = await userColl.countDocuments({});
-    if (count === 0) {
-        console.log("No users found");
-        next();
-    }
-    try {
-        const user = await userColl.findOne(query);
-        if (user) {
-            const query = { userid: userid.toString() };
-            const reviews = await reviewColl.find(query).toArray();
-            res.status(200).json({
-                reviews: reviews
+    } else {
+        let userid;
+        try {
+            userid = ObjectId.createFromHexString(req.params.userid);
+        } catch (error) {
+            console.error("Error:", error);
+            return res.status(400).json({
+                error: "Invalid user ID"
             });
-        } else {
+        }
+        const db = MongoDB.getInstance();
+        const userColl = db.collection(userCollection);
+        const reviewColl = db.collection(reviewCollection);
+        const query = { _id: userid };
+
+        const count = await userColl.countDocuments({});
+        if (count === 0) {
+            console.log("No users found");
             next();
         }
-    } catch (error) {
-        console.error("Error:", error);
-        res.status(400).json({
-            error: error
-        });
+        try {
+            const user = await userColl.findOne(query);
+            if (user) {
+                const query = { userid: userid.toString() };
+                const reviews = await reviewColl.find(query).toArray();
+                res.status(200).json({
+                    reviews: reviews
+                });
+            } else {
+                next();
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            res.status(400).json({
+                error: error
+            });
+        }
     }
 });
 
 /*
  * Route to list all of a user's photos.
  */
-router.get('/:userid/photos', async function (req, res, next) {
-
-    let userid;
-    try {
-        userid = ObjectId.createFromHexString(req.params.userid);
-    } catch (error) {
-        console.error("Error:", error);
-        return res.status(400).json({
-            error: "Invalid user ID"
+router.get('/:userid/photos', requireAuthentication, async function (req, res, next) {
+    if (req.user !== req.params.userid) {
+        res.status(403).json({
+            error: "Unauthorized to access the specified resource"
         });
-    }
-    const db = MongoDB.getInstance();
-    const userColl = db.collection(userCollection);
-    const photoColl = db.collection(photoCollection);
-    const query = { _id: userid };
-    const count = await userColl.countDocuments({});
-    if (count === 0) {
-        console.log("No users found");
-        next();
-    }
-    try {
-        const user = await userColl.findOne(query);
-        if (user) {
-            const query = { userid: userid.toString() };
-            var photos = [];
-            if (photoColl.countDocuments({})) {
-                photos = await photoColl.find(query).toArray();
-            }
-            res.status(200).json({
-                photos: photos
+    } else {
+        let userid;
+        try {
+            userid = ObjectId.createFromHexString(req.params.userid);
+        } catch (error) {
+            console.error("Error:", error);
+            return res.status(400).json({
+                error: "Invalid user ID"
             });
-        } else {
+        }
+        const db = MongoDB.getInstance();
+        const userColl = db.collection(userCollection);
+        const photoColl = db.collection(photoCollection);
+        const query = { _id: userid };
+        const count = await userColl.countDocuments({});
+        if (count === 0) {
+            console.log("No users found");
             next();
         }
-    } catch (error) {
-        console.error("Error:", error);
-        res.status(400).json({
-            error: error
-        });
+        try {
+            const user = await userColl.findOne(query);
+            if (user) {
+                const query = { userid: userid.toString() };
+                var photos = [];
+                if (photoColl.countDocuments({})) {
+                    photos = await photoColl.find(query).toArray();
+                }
+                res.status(200).json({
+                    photos: photos
+                });
+            } else {
+                next();
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            res.status(400).json({
+                error: error
+            });
+        }
     }
 });
 

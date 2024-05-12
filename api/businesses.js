@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
-
+const { requireAuthentication } = require('../lib/auth');
 
 const MongoDB = require('../database');
 const { ObjectId } = require('mongodb');
@@ -106,7 +106,7 @@ router.get('/', async function (req, res, next) {
 /*
  * Route to create a new business.
  */
-router.post('/', async function (req, res, next) {
+router.post('/', requireAuthentication, async function (req, res, next) {
     if (validateAgainstSchema(req.body, businessSchema)) {
         const business = extractValidFields(req.body, businessSchema);
         const db = MongoDB.getInstance();
