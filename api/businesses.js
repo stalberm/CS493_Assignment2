@@ -107,17 +107,31 @@ router.get('/', async function (req, res, next) {
  * Route to create a new business.
  */
 router.post('/', requireAuthentication, async function (req, res, next) {
+
     if (validateAgainstSchema(req.body, businessSchema)) {
         const business = extractValidFields(req.body, businessSchema);
-        const db = MongoDB.getInstance();
-        const businessesColl = db.collection(businessCollection);
-        const result = await businessesColl.insertOne(business);
-        res.status(201).json({
-            id: result.insertedId,
-            links: {
-                business: `/businesses/${result.insertedId}`
+        if (req.user !== business.ownerid) {
+            res.status(403).json({
+                error: "Unauthorized to access the specified resource"
+            });
+        } else {
+            const db = MongoDB.getInstance();
+            const businessesColl = db.collection(businessCollection);
+            const count = await businessesColl.countDocuments(business);
+            if (count == 0) {
+                const result = await businessesColl.insertOne(business);
+                res.status(201).json({
+                    id: result.insertedId,
+                    links: {
+                        business: `/businesses/${result.insertedId}`
+                    }
+                });
+            } else {
+                res.status(400).json({
+                    error: "Business Already Exists"
+                });
             }
-        });
+        }
     } else {
         res.status(400).json({
             error: "Request body is not a valid business object"
