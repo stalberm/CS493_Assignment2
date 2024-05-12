@@ -9,6 +9,7 @@ const MongoDB = require('../database');
 const { ObjectId } = require('mongodb');
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
 const e = require('express');
+const { requireAuthentication, generateAuthToken } = require('../lib/auth');
 const userCollection = "users";
 
 exports.userCollection = userCollection;
@@ -195,20 +196,68 @@ router.post('/', async function (req, res, next) {
     }
 });
 
+router.get('/:userid', requireAuthentication, async function (req, res, next) {
+
+    if (req.user !== req.params.userid) {
+        res.status(403).json({
+            error: "Unauthorized to access the specified resource"
+        });
+    } else {
+        let userID;
+        try {
+            userID = ObjectId.createFromHexString(req.params.userid);
+        } catch (error) {
+            console.log("Error:", error);
+            return res.status(400).json({
+                error: "Invalid user ID"
+            });
+        }
+
+        const db = MongoDB.getInstance();
+        const userColl = db.collection(userCollection);
+        const query = { _id: userID };
+
+        const count = await userColl.countDocuments({});
+        if (count === 0) {
+            console.log("No reviews found");
+            next();
+        }
+        try {
+            const user = await userColl
+                .find(query).project({ password: 0 }).next();
+            if (user) {
+                res.status(200).json(user);
+            } else {
+                next();
+            }
+        } catch (error) {
+            console.error("Error", error);
+            res.status(400).json({
+                error: error
+            });
+        }
+    }
+})
+
+
 router.post('/login', async function (req, res, next) {
+
     if (req.body && req.body.email && req.body.password) {
         try {
             const authenticated =
                 await validateUser(req.body.email, req.body.password);
             if (authenticated) {
-                res.status(200).send({});
+                const user = await getUserByEmail(req.body.email, false);
+                console.log("USER", user);
+                const token = generateAuthToken(user._id.toString());
+                res.status(200).send({ token: token });
             } else {
                 res.status(401).send({
                     error: "Invalid authentication credentials"
                 });
             }
-        } catch (err) {
-            console.log(err);
+        } catch (error) {
+            console.log(error);
             res.status(500).send({
                 error: "Error logging in.  Try again later."
             });
@@ -221,13 +270,13 @@ router.post('/login', async function (req, res, next) {
 })
 
 async function validateUser(email, password) {
-    const user = await getUserByID(email, true);
+    const user = await getUserByEmail(email, true);
     const authenticated = user &&
         await bcrypt.compare(password, user.password);
     return authenticated;
 }
 
-async function getUserByID(email, includePassword) {
+async function getUserByEmail(email, includePassword) {
     const projection = includePassword ? {} : { password: 0 };
     const db = MongoDB.getInstance();
     const userColl = db.collection(userCollection);
