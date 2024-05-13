@@ -51,6 +51,15 @@ app.use('*', function (err, req, res, next) {
 
 async function initializeDatabase() {
     await MongoDB.init(mongoURL, mongoDBName)
+    const adminUser = {
+        name: "Test Admin",
+        email: "admin@example.com",
+        password: "$2a$08$Y00/JO/uN9n0dHKuudRX2eKksWMIHXDLzHWKuz/K67alAYsZRRike",
+        admin: true
+    }
+    const db = MongoDB.getInstance();
+    const results = await db.collection("users").insertOne(adminUser)
+    console.log(results);
     app.listen(port, function () {
         console.log("== Server listening on port", port);
     });

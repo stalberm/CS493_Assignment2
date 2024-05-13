@@ -31,7 +31,8 @@ const userSchema = {
  */
 router.get('/:userid/businesses', requireAuthentication, async function (req, res, next) {
 
-    if (req.user !== req.params.userid) {
+    const isAdmin = await checkAdmin(req);
+    if (!isAdmin && req.user !== req.params.userid) {
         res.status(403).json({
             error: "Unauthorized to access the specified resource"
         });
@@ -79,7 +80,9 @@ router.get('/:userid/businesses', requireAuthentication, async function (req, re
  * Route to list all of a user's reviews.
  */
 router.get('/:userid/reviews', requireAuthentication, async function (req, res, next) {
-    if (req.user !== req.params.userid) {
+
+    const isAdmin = await checkAdmin(req);
+    if (!isAdmin && req.user !== req.params.userid) {
         res.status(403).json({
             error: "Unauthorized to access the specified resource"
         });
@@ -127,7 +130,9 @@ router.get('/:userid/reviews', requireAuthentication, async function (req, res, 
  * Route to list all of a user's photos.
  */
 router.get('/:userid/photos', requireAuthentication, async function (req, res, next) {
-    if (req.user !== req.params.userid) {
+
+    const isAdmin = await checkAdmin(req);
+    if (!isAdmin && req.user !== req.params.userid) {
         res.status(403).json({
             error: "Unauthorized to access the specified resource"
         });
@@ -174,7 +179,6 @@ router.get('/:userid/photos', requireAuthentication, async function (req, res, n
 });
 
 router.post('/', async function (req, res, next) {
-    console.log(req.body);
     if (validateAgainstSchema(req.body, userSchema)) {
         const user = extractValidFields(req.body, userSchema);
         const passwordHash = await bcrypt.hash(user.password, 8);
@@ -224,7 +228,8 @@ router.post('/', async function (req, res, next) {
 
 router.get('/:userid', requireAuthentication, async function (req, res, next) {
 
-    if (req.user !== req.params.userid) {
+    const isAdmin = await checkAdmin(req);
+    if (!isAdmin && req.user !== req.params.userid) {
         res.status(403).json({
             error: "Unauthorized to access the specified resource"
         });

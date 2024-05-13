@@ -2,13 +2,6 @@ const { MongoClient } = require('mongodb');
 
 let db;
 
-// async function init(url, mongoDBName) {
-//     console.log("Attemping to connect");
-//     const client = await MongoClient.connect(url)
-//     db = client.db(mongoDBName);
-//     console.log("Initialized");
-// }
-
 
 //More precaution for failed connection because I got some weird compose order error...
 async function init(url, mongoDBName) {

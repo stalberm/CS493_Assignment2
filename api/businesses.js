@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
-const { requireAuthentication } = require('../lib/auth');
+const { requireAuthentication, checkAdmin } = require('../lib/auth');
 
 const MongoDB = require('../database');
 const { ObjectId } = require('mongodb');
@@ -43,64 +43,71 @@ router.get('/', async function (req, res, next) {
     const db = MongoDB.getInstance();
     const businessesColl = db.collection("businesses");
     const query = {};
+    const isAdmin = await checkAdmin(req)
+    if (isAdmin) {
+        try {
+            const cursor = businessesColl.find(query);
+            await cursor.forEach(doc => {
+                businesses.push(doc);
+            });
 
-    try {
-        const cursor = businessesColl.find(query);
-        await cursor.forEach(doc => {
-            businesses.push(doc);
+            console.dir(businesses);
+        } catch (error) {
+            console.error("Error:", error);
+            res.status(400).json({
+                error: error
+            });
+        }
+
+        /*
+         * Compute page number based on optional query string parameter `page`.
+         * Make sure page is within allowed bounds.
+         */
+
+        let page = parseInt(req.query.page) || 1;
+        const numPerPage = 10;
+        const lastPage = Math.ceil(businesses.length / numPerPage);
+        page = page > lastPage ? lastPage : page;
+        page = page < 1 ? 1 : page;
+
+        /*
+         * Calculate starting and ending indices of businesses on requested page and
+         * slice out the corresponsing sub-array of busibesses.
+         */
+        const start = (page - 1) * numPerPage;
+        const end = start + numPerPage;
+        const pageBusinesses = businesses.slice(start, end);
+
+        /*
+         * Generate HATEOAS links for surrounding pages.
+         */
+        const links = {};
+        if (page < lastPage) {
+            links.nextPage = `/businesses?page=${page + 1}`;
+            links.lastPage = `/businesses?page=${lastPage}`;
+        }
+        if (page > 1) {
+            links.prevPage = `/businesses?page=${page - 1}`;
+            links.firstPage = '/businesses?page=1';
+        }
+
+        /*
+         * Construct and send response.
+         */
+        res.status(200).json({
+            businesses: pageBusinesses,
+            pageNumber: page,
+            totalPages: lastPage,
+            pageSize: numPerPage,
+            totalCount: businesses.length,
+            links: links
         });
-
-        console.dir(businesses);
-    } catch (error) {
-        console.error("Error:", error);
-        res.status(400).json({
-            error: error
+    } else {
+        res.status(403).json({
+            error: "Unauthorized to access the specified resource"
         });
     }
 
-    /*
-     * Compute page number based on optional query string parameter `page`.
-     * Make sure page is within allowed bounds.
-     */
-
-    let page = parseInt(req.query.page) || 1;
-    const numPerPage = 10;
-    const lastPage = Math.ceil(businesses.length / numPerPage);
-    page = page > lastPage ? lastPage : page;
-    page = page < 1 ? 1 : page;
-
-    /*
-     * Calculate starting and ending indices of businesses on requested page and
-     * slice out the corresponsing sub-array of busibesses.
-     */
-    const start = (page - 1) * numPerPage;
-    const end = start + numPerPage;
-    const pageBusinesses = businesses.slice(start, end);
-
-    /*
-     * Generate HATEOAS links for surrounding pages.
-     */
-    const links = {};
-    if (page < lastPage) {
-        links.nextPage = `/businesses?page=${page + 1}`;
-        links.lastPage = `/businesses?page=${lastPage}`;
-    }
-    if (page > 1) {
-        links.prevPage = `/businesses?page=${page - 1}`;
-        links.firstPage = '/businesses?page=1';
-    }
-
-    /*
-     * Construct and send response.
-     */
-    res.status(200).json({
-        businesses: pageBusinesses,
-        pageNumber: page,
-        totalPages: lastPage,
-        pageSize: numPerPage,
-        totalCount: businesses.length,
-        links: links
-    });
 });
 
 /*
