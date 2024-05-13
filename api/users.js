@@ -9,7 +9,7 @@ const MongoDB = require('../database');
 const { ObjectId } = require('mongodb');
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
 const e = require('express');
-const { requireAuthentication, generateAuthToken } = require('../lib/auth');
+const { requireAuthentication, generateAuthToken, checkAdmin } = require('../lib/auth');
 const userCollection = "users";
 
 exports.userCollection = userCollection;
@@ -64,7 +64,7 @@ router.get('/:userid/businesses', requireAuthentication, async function (req, re
                     businesses: businesses
                 });
             } else {
-                next();
+                return
             }
         } catch (error) {
             console.error("Error:", error);
@@ -174,11 +174,11 @@ router.get('/:userid/photos', requireAuthentication, async function (req, res, n
 });
 
 router.post('/', async function (req, res, next) {
+    console.log(req.body);
     if (validateAgainstSchema(req.body, userSchema)) {
         const user = extractValidFields(req.body, userSchema);
         const passwordHash = await bcrypt.hash(user.password, 8);
         user.password = passwordHash;
-        user.admin = false;
         const db = MongoDB.getInstance();
         const userColl = db.collection(userCollection);
         if (user._id) {
@@ -192,13 +192,22 @@ router.post('/', async function (req, res, next) {
             });
         } else {
             try {
-                const result = await userColl.insertOne(user);
-                res.status(201).json({
-                    id: result.insertedId,
-                    links: {
-                        user: `/users/${result.insertedId}`,
-                    }
-                });
+                const isAdmin = await checkAdmin(req);
+                if (isAdmin) {
+                    user.admin = false;
+                    const result = await userColl.insertOne(user);
+                    res.status(201).json({
+                        id: result.insertedId,
+                        links: {
+                            user: `/users/${result.insertedId}`,
+                        }
+                    });
+                } else {
+                    res.status(403).json({
+                        error: "Unauthorized to access the specified resource"
+                    });
+                    return;
+                }
             } catch (error) {
                 console.error("Error:", error);
                 res.status(400).json({
