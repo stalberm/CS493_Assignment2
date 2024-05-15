@@ -22,6 +22,13 @@ const user2 = {
     password: "testpass"
 }
 
+const user3 = {
+    name: "Test User3",
+    email: "example3@example.com",
+    password: "testpass",
+    admin: true
+}
+
 let validAdminToken;
 let validUserToken;
 let validUser2Token;
@@ -60,7 +67,7 @@ describe('User Endpoint Tests', () => {
     })
 
 
-    test('POST /users With Admin Status', async () => {
+    test('POST /users Admin and Non Admin With Admin Status', async () => {
         const headers = {
             'Authorization': `Bearer ${validAdminToken}`,
             'Content-Type': 'application/json'
@@ -77,6 +84,9 @@ describe('User Endpoint Tests', () => {
         expect(response2.status).toBe(201);
         expect(response2.data).toHaveProperty("id");
         user2Id = response2.data.id;
+
+        const response3 = await axios.post(`${API_URL}/users`, user3, config);
+        expect(response3.status).toBe(201);
     })
 
     test('POST /users/login Regular User', async () => {
