@@ -179,6 +179,7 @@ router.get('/:userid/photos', requireAuthentication, async function (req, res, n
 });
 
 router.post('/', async function (req, res, next) {
+
     if (validateAgainstSchema(req.body, userSchema)) {
         const user = extractValidFields(req.body, userSchema);
         const passwordHash = await bcrypt.hash(user.password, 8);
