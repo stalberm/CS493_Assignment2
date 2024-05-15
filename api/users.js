@@ -198,8 +198,8 @@ router.post('/', async function (req, res, next) {
         } else {
             try {
                 const isAdmin = await checkAdmin(req);
-                if (isAdmin) {
-                    user.admin = false;
+                user.isAdmin = !!user.isAdmin;
+                if (user.isAdmin == false || (user.isAdmin == true && isAdmin)) {
                     const result = await userColl.insertOne(user);
                     res.status(201).json({
                         id: result.insertedId,
