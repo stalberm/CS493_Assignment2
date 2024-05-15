@@ -10,6 +10,12 @@ const user = {
     password: "testpass"
 }
 
+const user1 = {
+    name: "Test User1",
+    email: "example1@example.com",
+    password: "testpass"
+}
+
 const user2 = {
     name: "Test User2",
     email: "example2@example.com",
@@ -27,6 +33,7 @@ describe('User Endpoint Tests', () => {
     beforeAll(async () => {
         const loginResponse = await axios.post(`${API_URL}/users/login`, { "email": adminEmail, "password": adminPass });
         validAdminToken = loginResponse.data.token;
+        console.log(validAdminToken);
     });
 
     test('POST /users/login Admin Wrong Creds', async () => {
@@ -37,12 +44,19 @@ describe('User Endpoint Tests', () => {
         }
     })
 
-    test('POST /users Without Admin Status', async () => {
+    test('POST /users Admin Without Admin Status', async () => {
+        user1.admin = true;
         try {
-            await axios.post(`${API_URL}/users`, user);
+            await axios.post(`${API_URL}/users`, user1);
         } catch (error) {
-            expect(error.response.status).toBe(403);
+            expect(error.response.status).toBe(403)
         }
+    })
+
+    test('POST /users Non Admin Without Admin Status', async () => {
+        user1.admin = false;
+        const response = await axios.post(`${API_URL}/users`, user1);
+        expect(response.status).toBe(201);
     })
 
 
@@ -84,6 +98,7 @@ describe('User Endpoint Tests', () => {
             expect(error.response.status).toBe(401);
         }
     })
+
 
     test('GET /users/:userid As User', async () => {
         const headers = {
@@ -604,7 +619,7 @@ describe('Review Endpoint Tests', () => {
         const config = {
             headers: headers
         }
-        console.log(userReviewId);
+
         try {
             await axios.delete(`${API_URL}/reviews/${userReviewId}`, config);
         } catch (error) {
@@ -769,7 +784,7 @@ describe('Photo Endpoint Tests', () => {
         const config = {
             headers: headers
         }
-        console.log(userReviewId);
+
         try {
             await axios.delete(`${API_URL}/photos/${userPhotoId}`, config);
         } catch (error) {

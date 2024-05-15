@@ -198,30 +198,33 @@ router.post('/', async function (req, res, next) {
         } else {
             try {
                 const isAdmin = await checkAdmin(req);
-                user.isAdmin = !!user.isAdmin;
-                if (user.isAdmin == false || (user.isAdmin == true && isAdmin)) {
+                console.log(isAdmin);
+                if (isAdmin || (!isAdmin && !user.admin)) {
+                    user.admin ? true : false;
                     const result = await userColl.insertOne(user);
-                    res.status(201).json({
+                    console.log("POST SUCCEEDED WITH ADMIN STATUS", isAdmin);
+                    return res.status(201).json({
                         id: result.insertedId,
                         links: {
                             user: `/users/${result.insertedId}`,
                         }
                     });
                 } else {
-                    res.status(403).json({
+                    console.log("POST FAILED WITH ADMIN STATUS", isAdmin);
+                    return res.status(403).json({
                         error: "Unauthorized to access the specified resource"
                     });
-                    return;
+
                 }
             } catch (error) {
                 console.error("Error:", error);
-                res.status(400).json({
+                return res.status(400).json({
                     error: error
                 })
             }
         }
     } else {
-        res.status(400).json({
+        return res.status(400).json({
             error: "Request body is not a valid user object"
         });
     }
@@ -280,22 +283,22 @@ router.post('/login', async function (req, res, next) {
                 await validateUser(req.body.email, req.body.password);
             if (authenticated) {
                 const user = await getUserByEmail(req.body.email, false);
-                console.log("USER", user);
                 const token = generateAuthToken(user._id.toString());
-                res.status(200).send({ token: token });
+                return res.status(200).send({ token: token });
             } else {
-                res.status(401).send({
+                return res.status(401).send({
                     error: "Invalid authentication credentials"
                 });
             }
         } catch (error) {
             console.log(error);
-            res.status(500).send({
+            return res.status(500).send({
                 error: "Error logging in.  Try again later."
             });
         }
     } else {
-        res.status(400).json({
+        console.log("FAILED LOGIN CHECK");
+        return res.status(400).json({
             error: "Request body needs user ID and password."
         });
     }
